@@ -32,7 +32,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role_id' => 'required|exists:roles,id',
-            'employee_id' => 'nullable|exists:employees,id',
+            'employee_id' => 'required|exists:employees,id',
         ]);
 
         $user = User::create([
@@ -40,6 +40,7 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => $request->password,
             'role_id' => $request->role_id,
+            'employee_id' => $request->employee_id,
         ]);
 
         return response()->json([
@@ -54,7 +55,13 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+
+        $user = User::with(['employee', 'role'])->findOrFail($id);
+        return response()->json([
+            'user' => UserResource::make($user),
+            'message' => 'User fetched successfully',
+            'status' => 200,
+        ], 200);
     }
 
     /**
@@ -62,7 +69,28 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
+            'password' => 'sometimes|nullable|string|min:8|confirmed',
+            'role_id' => 'sometimes|required|exists:roles,id',
+            'employee_id' => 'sometimes|required|exists:employees,id',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => $request->password ?? $user->password,
+            'role_id' => $request->role_id,
+            'employee_id' => $request->employee_id,
+        ]);
+
+        return response()->json([
+            'user' => new UserResource($user),
+            'message' => 'User updated successfully',
+            'status' => 200,
+        ], 200);
     }
 
     /**
@@ -70,6 +98,12 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $user = User::findOrFail($id);
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User deleted successfully',
+            'status' => 200,
+        ], 200);
     }
 }
