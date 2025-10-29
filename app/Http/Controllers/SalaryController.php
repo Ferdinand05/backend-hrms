@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\SalaryResource;
 use App\Models\Salary;
 use Illuminate\Http\Request;
 
@@ -12,7 +13,11 @@ class SalaryController extends Controller
      */
     public function index()
     {
-        //
+        return response()->json([
+            'salaries' => SalaryResource::collection(Salary::with('employee')->latest()->get()),
+            'message' => 'Salaries fetched successfully',
+            'status' => '200'
+        ]);
     }
 
     /**
@@ -20,7 +25,21 @@ class SalaryController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'employee_id' => 'required|exists:employees,id|unique:salaries,employee_id',
+            'base_salary' => ['required', 'numeric'],
+            'allowance' => ['required', 'numeric'],
+            'deduction' => ['required', 'numeric'],
+            'overtime_rate' => ['required', 'numeric'],
+        ]);
+
+        $salary = Salary::create($data);
+
+        return response()->json([
+            'salary' => SalaryResource::make($salary),
+            'message' => 'Salary added successfully.',
+            'status' => '201'
+        ], 201);
     }
 
     /**
@@ -34,16 +53,43 @@ class SalaryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Salary $salary)
+    public function update(Request $request, string $id)
     {
-        //
+        $data = $request->validate([
+            'employee_id' => 'required|sometimes|exists:employees,id|unique:salaries,employee_id,' . $id,
+            'base_salary' => ['required', 'sometimes', 'numeric'],
+            'allowance' => ['required', 'sometimes', 'numeric'],
+            'deduction' => ['required', 'sometimes', 'numeric'],
+            'overtime_rate' => ['required', 'sometimes', 'numeric'],
+        ]);
+
+        $salary = Salary::findOrFail($id);
+        $salary->update($data);
+
+
+        return response()->json([
+            'salary' => $salary,
+            'message' => 'Salary updated successfully.',
+            'status' => '200'
+        ], 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Salary $salary)
+    public function destroy(Request $request, string $id)
     {
-        //
+
+        $salary = Salary::findOrFail($id);
+
+
+        if ($salary) {
+            $salary->delete();
+
+            return response()->json([
+                'message' => 'Salary deleted successfully.',
+                'status' => '200'
+            ]);
+        }
     }
 }

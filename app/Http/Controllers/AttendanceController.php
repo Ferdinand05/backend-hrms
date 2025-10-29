@@ -15,9 +15,22 @@ class AttendanceController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $attendances = Attendance::with('employee')->latest()->get();
+
+
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+
+        $query = Attendance::with('employee');
+
+        if ($start_date && $end_date) {
+            $query->whereBetween('date', [$start_date, $end_date]);
+        } else if ($start_date) {
+            $query->whereDate('date', $start_date);
+        }
+
+        $attendances = $query->latest()->get();
         return response()->json([
             'attendances' => AttendanceResource::collection($attendances),
             'message' => 'Attendances data fetched successfully',

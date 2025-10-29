@@ -32,7 +32,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role_id' => 'required|exists:roles,id',
-            'employee_id' => 'required|exists:employees,id',
+            'employee_id' => 'required|exists:employees,id|unique:users,employee_id',
         ]);
 
         $user = User::create([
@@ -74,7 +74,7 @@ class UserController extends Controller
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
             'password' => 'sometimes|nullable|string|min:8|confirmed',
             'role_id' => 'sometimes|required|exists:roles,id',
-            'employee_id' => 'sometimes|required|exists:employees,id',
+            'employee_id' => 'sometimes|required|exists:employees,id|unique:users,employee_id' . $id,
         ]);
 
         $user = User::findOrFail($id);

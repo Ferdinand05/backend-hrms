@@ -43,7 +43,24 @@ class OfficeController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $data = $request->validate([
+            'app_name' => 'required|string',
+            'latitude' => 'required',
+            'longitude' => 'required',
+            'radius' => 'required|numeric',
+            'max_accuracy' => 'required|numeric',
+            'start_time' => 'required',
+            'end_time' => 'required',
+        ]);
+
+        $office = Office::find($id);
+        $office->update($data);
+
+        return response()->json([
+            'office' => $office,
+            'message' => 'Office updated successfully.',
+            'status' => '200'
+        ], 200);
     }
 
     /**

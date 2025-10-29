@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -34,6 +35,8 @@ class EmployeeResource extends JsonResource
             'hire_date' => $this->hire_date,
             'created_at' => $this->created_at->toDateTimeString(),
             'updated_at' => $this->updated_at->toDateTimeString(),
+            'salary' => SalaryResource::make($this->whenLoaded('salary')),
+            'user' => UserResource::make($this->whenLoaded('user'))
         ];
     }
 }

@@ -16,11 +16,63 @@ class EmployeeController extends Controller
     public function index()
     {
         return response()->json([
-            'employees' => EmployeeResource::collection(Employee::with('department')->get()),
+            'employees' => EmployeeResource::collection(Employee::with(['department', 'salary', 'user'])->orderBy('full_name', 'asc')->get()),
             'message' => 'Employee list fetched successfully',
             'status' => 200,
         ]);
     }
+
+
+    // return data employee where has salary
+    public function employeesWithSalaryWithoutPayroll()
+    {
+        $currentPeriod = now()->format('Y-m'); // contoh: 2025-10
+
+        $employees = \App\Models\Employee::whereHas('salary') // ✅ hanya yang punya salary
+            ->whereDoesntHave('payrolls', function ($query) use ($currentPeriod) {
+                $query->where('period', $currentPeriod); // ❌ belum punya payroll bulan ini
+            })
+            ->with(['salary', 'department'])
+            ->orderBy('full_name', 'asc')
+            ->get();
+
+        return response()->json([
+            'employees' => \App\Http\Resources\EmployeeResource::collection($employees),
+            'message' => 'Employees with salary but without payroll for this period fetched successfully.',
+            'status' => 200,
+        ]);
+    }
+
+    public function employeesDoesntHaveSalary()
+    {
+
+        $employees = Employee::whereDoesntHave('salary')
+            ->with(['department'])
+            ->orderBy('full_name', 'asc')
+            ->get();
+
+        return response()->json([
+            'employees' => \App\Http\Resources\EmployeeResource::collection($employees),
+            'message' => 'Employees with salary but without payroll for this period fetched successfully.',
+            'status' => 200,
+        ]);
+    }
+
+    public function employeesDoesntHaveUser()
+    {
+
+        $employees = Employee::whereDoesntHave('user')
+            ->with(['department'])
+            ->orderBy('full_name', 'asc')
+            ->get();
+
+        return response()->json([
+            'employees' => \App\Http\Resources\EmployeeResource::collection($employees),
+            'message' => 'Employees without user relation fetched successfully.',
+            'status' => 200,
+        ]);
+    }
+
 
     /**
      * Store a newly created resource in storage.
