@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\PayrollResource;
+use App\Jobs\BulkDeletePayrollJob;
+use App\Jobs\GenerateAllPayrollJob;
+use App\Jobs\UpdatePayrollToPaid;
 use App\Models\Payroll;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -120,6 +123,7 @@ class PayrollController extends Controller
             'overtime_hours' => 'required|sometimes|numeric',
             'overtime_pay' => 'required|sometimes|numeric',
             'period' => 'required',
+            'status' => 'required|in:pending,paid',
         ]);
 
         $payroll->update($validated);
@@ -142,24 +146,23 @@ class PayrollController extends Controller
 
     public function selectionSetPaid(Request $request)
     {
-        $Ids = $request->selectionId;
 
-        $payroll = Payroll::whereIn('id', $Ids)
-            ->update([
-                'status' => 'paid'
-            ]);
+        $ids = $request->selectionId;
+        UpdatePayrollToPaid::dispatch($ids);
 
+        $payrollCount = count($ids);
         $user = auth()->user();
         activity('payroll_log')
             ->performedOn(new Payroll())
             ->event('updated')
             ->causedBy(auth()->user())
-            ->log("{$user->name} Set Paid {$payroll} Payroll");
+            ->log("{$user->name} Set Paid {$payrollCount} Payroll");
 
 
-        if ($payroll >= 1) {
+
+        if ($payrollCount >= 1) {
             return response()->json([
-                'message' => "{$payroll} Data selection updated to Paid!"
+                'message' => "{$payrollCount} Data selection updated to Paid!"
             ], 200);
         } else {
             return response()->json([
@@ -172,25 +175,45 @@ class PayrollController extends Controller
     {
         $Ids = $request->selectionId;
 
-        $payroll = Payroll::whereIn('id', $Ids)
-            ->delete();
+        BulkDeletePayrollJob::dispatch($Ids);
 
-
+        $payrollCount = count($Ids);
         $user = auth()->user();
+
+
         activity('payroll_log')
             ->performedOn(new Payroll())
             ->event('bulk_delete')
             ->causedBy(auth()->user())
-            ->log("{$user->name} Bulk Delete {$payroll} Payroll");
+            ->log("{$user->name} Bulk Delete {$payrollCount} Payroll");
 
-        if ($payroll >= 1) {
+        if ($payrollCount >= 1) {
             return response()->json([
-                'message' => "{$payroll} Data selection Deleted!"
+                'message' => "{$payrollCount} Data selection Deleted!"
             ], 200);
         } else {
             return response()->json([
                 'message' => 'Failed to delete all selection'
             ], 400);
         }
+    }
+
+
+
+    public function generateAllEmployeePayroll()
+    {
+        // Dispatch the job to generate payrolls for all employees
+        GenerateAllPayrollJob::dispatch();
+
+        activity('payroll_log')
+            ->performedOn(new Payroll())
+            ->event('generate_all')
+            ->causedBy(auth()->user())
+            ->log(auth()->user()->name . " Initiated generation of payrolls for all employees.");
+
+        return response()->json([
+            'message' => 'Payroll generation for all employees has been initiated.',
+            'status' => '200'
+        ], 200);
     }
 }

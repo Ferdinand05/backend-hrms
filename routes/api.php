@@ -49,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/payrolls', PayrollController::class);
     Route::put('/payrolls/bulk/paid', [PayrollController::class, 'selectionSetPaid']);
     Route::post('/payrolls/bulk/delete', [PayrollController::class, 'bulkDelete']);
+    Route::post('/payrolls/generate-all', [PayrollController::class, 'generateAllEmployeePayroll']);
     // logs
     Route::apiResource('/logs', LogController::class);
     // offices

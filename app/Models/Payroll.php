@@ -22,14 +22,19 @@ class Payroll extends Model
 
     public function getDescriptionForEvent(string $eventName): string
     {
-        $user = auth()->user() ?? 'System';
+        $user = auth()->user();
         $name = $this->employee->full_name ?? '(nama tidak diketahui)';
 
+        // jika queue (tidak ada user)
+        $performedBy = $user
+            ? "{$user->name} - {$user->role->role_name}"
+            : "System (Queue)";
+
         return match ($eventName) {
-            'created' => "Payroll {$name} has been added by {$user->name} - {$user->role->role_name}.",
-            'updated' => "Data Payroll {$name} has been updated caused by {$user->name} - {$user->role->role_name}.",
-            'deleted' => "Payroll {$name} has been deleted {$user->name} - {$user->role->role_name}.",
-            default   => "Activity {$eventName} caused by {$user->name} to Payroll {$name}."
+            'created' => "Payroll {$name} has been added by {$performedBy}.",
+            'updated' => "Data Payroll {$name} has been updated by {$performedBy}.",
+            'deleted' => "Payroll {$name} has been deleted by {$performedBy}.",
+            default   => "Activity {$eventName} triggered by {$performedBy} for Payroll {$name}.",
         };
     }
 
