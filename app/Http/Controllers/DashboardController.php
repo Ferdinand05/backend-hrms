@@ -8,6 +8,7 @@ use App\Models\Leave;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -22,6 +23,38 @@ class DashboardController extends Controller
         }
 
 
+        // Ambil total leave per bulan (semua status)
+        $totalLeaves = Leave::select(
+            DB::raw('MONTH(start_date) as month'),
+            DB::raw('COUNT(*) as total')
+        )
+            ->whereYear('start_date', now()->year)
+            ->groupBy('month')
+            ->pluck('total', 'month');
+
+        // Ambil total leave dengan status "rejected" per bulan
+        $rejectedLeaves = Leave::select(
+            DB::raw('MONTH(start_date) as month'),
+            DB::raw('COUNT(*) as rejected')
+        )
+            ->whereYear('start_date', now()->year)
+            ->where('status', 'rejected')
+            ->groupBy('month')
+            ->pluck('rejected', 'month');
+
+        // Nama bulan
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        // Gabungkan data ke bentuk array untuk chart
+        $dataChart = collect($months)->map(function ($month, $index) use ($totalLeaves, $rejectedLeaves) {
+            return [
+                'name' => $month,
+                'total' => $totalLeaves[$index + 1] ?? 0,
+                'rejected' => $rejectedLeaves[$index + 1] ?? 0,
+            ];
+        });
+
+
         $data = [
             'totalEmployee' => Employee::count(),
             'totalEmployeeActive' => Employee::where('status', 'active')->count(),
@@ -30,7 +63,9 @@ class DashboardController extends Controller
             'totalLeavePending' => Leave::where('status', 'pending')->count(),
             'totalUsers' => User::count(),
             'totalThisMonthAttendance' => Attendance::whereMonth('created_at', $currentDate)->count(),
-            'totalAttendanceLateThisMonth' => Attendance::whereMonth('created_at', $currentDate)->where('status', 'late')->count()
+            'totalAttendanceLateThisMonth' => Attendance::whereMonth('created_at', $currentDate)->where('status', 'late')->count(),
+            'latestPendingLeaves' => Leave::with('employee')->where('status', 'pending')->latest()->get(),
+            'dataChart' => $dataChart
         ];
 
 
