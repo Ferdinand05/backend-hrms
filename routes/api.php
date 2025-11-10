@@ -4,8 +4,10 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\Log\LogController;
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\Profile\ProfileUserController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -47,19 +49,31 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/payrolls', PayrollController::class);
     Route::put('/payrolls/bulk/paid', [PayrollController::class, 'selectionSetPaid']);
     Route::post('/payrolls/bulk/delete', [PayrollController::class, 'bulkDelete']);
+    // logs
+    Route::apiResource('/logs', LogController::class);
+    // offices
+    Route::apiResource('/offices', OfficeController::class);
 
-    //# for user employee
+
+    // --------------------------------------------------------------------------------
+
+    //SECTION for user employee
     // user store leaves
     Route::post('/leaves/user/create', [LeaveController::class, 'userStore']);
+
     // user get payrolls this month
     Route::get('/payrolls/user/this-month', [PayrollController::class, 'getUserPayrollThisMonth']);
+
     // user store attendance
     Route::post('/attendances/user/check-in', [AttendanceController::class, 'checkIn']);
     Route::post('/attendances/user/check-out', [AttendanceController::class, 'checkOut']);
     Route::get('/attendances/get/today-attendance', [AttendanceController::class, 'getTodayAttendance']);
 
-    // offices
-    Route::apiResource('/offices', OfficeController::class);
+    //SECTION profile user
+    Route::get('user/profile', [ProfileUserController::class, 'getProfile']);
+    Route::get('user/profile/leave', [ProfileUserController::class, 'getLeave']);
+    Route::get('user/profile/attendance', [ProfileUserController::class, 'getAttendance']);
+    Route::get('user/profile/payroll', [ProfileUserController::class, 'getPayroll']);
 });
 
 
