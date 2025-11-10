@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
@@ -26,6 +27,14 @@ class AuthController extends Controller
             $user->tokens()->delete();
             $token = $user->createToken('auth_token')->plainTextToken;
             $user->load('role');
+
+            $userModel = new User();
+            activity('auth_log')
+                ->performedOn($userModel)
+                ->event('login')
+                ->causedBy($user)
+                ->log("{$user->name} has Logged In");
+
             return response()->json([
                 'access_token' => $token,
                 'message' => 'Hello ' . $user->name . ', welcome back!',
@@ -41,6 +50,14 @@ class AuthController extends Controller
     {
         $user = auth()->user();
         $user->tokens()->delete();
+
+
+        $userModel = new User();
+        activity('auth_log')
+            ->performedOn($userModel)
+            ->event('logout')
+            ->causedBy($user)
+            ->log("{$user->name} has Logged Out");
 
         return response()->json(['message' => 'Successfully logged out']);
     }

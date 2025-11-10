@@ -25,9 +25,9 @@ class Attendance extends Model
         $name = $this->employee->full_name ?? '(nama tidak diketahui)';
 
         return match ($eventName) {
-            'created' => "Attendance {$name} has been added by {$user->name} - {$user->role->role_name}.",
-            'updated' => "Data Attendance {$name} has been updated caused by {$user->name} - {$user->role->role_name}.",
-            'deleted' => "Attendance {$name} has been deleted {$user->name} - {$user->role->role_name}.",
+            'created' => "{$name} has been Check In",
+            'updated' => "{$name} has been Check Out",
+            'deleted' => "Attendance {$name} has been deleted by {$user->name} - {$user->role->role_name}.",
             default   => "Activity {$eventName} caused by {$user->name} to Attendance {$name}."
         };
     }

@@ -18,12 +18,20 @@ class PayrollController extends Controller
     public function index(Request $request)
     {
 
-        $payrolls = Payroll::query()
-            ->when($request->month, function ($query, $month) {
-                $query->where('period', $month);
-            })
-            ->with(['employee', 'salary'])
-            ->latest()->get();
+        if ($request->month) {
+            $payrolls = Payroll::query()
+                ->where('period', $request->month)
+                ->with(['employee', 'salary'])
+                ->latest()
+                ->get();
+        } else {
+            $payrolls = Payroll::query()
+                ->where('period', Carbon::now('Asia/Jakarta')->format('Y-m'))
+                ->with(['employee', 'salary'])
+                ->latest()
+                ->get();
+        }
+
 
         return response()->json([
             'payrolls' => PayrollResource::collection($payrolls),
@@ -141,6 +149,14 @@ class PayrollController extends Controller
                 'status' => 'paid'
             ]);
 
+        $user = auth()->user();
+        activity('payroll_log')
+            ->performedOn(new Payroll())
+            ->event('updated')
+            ->causedBy(auth()->user())
+            ->log("{$user->name} Set Paid {$payroll} Payroll");
+
+
         if ($payroll >= 1) {
             return response()->json([
                 'message' => "{$payroll} Data selection updated to Paid!"
@@ -158,6 +174,14 @@ class PayrollController extends Controller
 
         $payroll = Payroll::whereIn('id', $Ids)
             ->delete();
+
+
+        $user = auth()->user();
+        activity('payroll_log')
+            ->performedOn(new Payroll())
+            ->event('bulk_delete')
+            ->causedBy(auth()->user())
+            ->log("{$user->name} Bulk Delete {$payroll} Payroll");
 
         if ($payroll >= 1) {
             return response()->json([

@@ -105,9 +105,16 @@ class LeaveController extends Controller
             'approved_by' => Auth::id()
         ]);
 
+        $user = auth()->user();
+        activity('leave_log')
+            ->performedOn(new Leave())
+            ->event('updated')
+            ->causedBy(auth()->user())
+            ->log("{$user->name} Set Approved {$leave} Leave");
+
         if ($leave >= 1) {
             return response()->json([
-                'message' => "{$leave} Data selection updated to approved!"
+                'message' => "{$leave} Data sselection updated to approved!"
             ], 200);
         } else {
             return response()->json([
@@ -124,6 +131,13 @@ class LeaveController extends Controller
             'status' => 'rejected',
             'approved_by' => Auth::id()
         ]);
+
+        $user = auth()->user();
+        activity('leave_log')
+            ->performedOn(new Leave())
+            ->event('updated')
+            ->causedBy(auth()->user())
+            ->log("{$user->name} Set Rejected {$leave} Leave");
 
         if ($leave >= 1) {
             return response()->json([
@@ -143,9 +157,17 @@ class LeaveController extends Controller
 
         $leave = Leave::whereIn('id', $ids)->delete();
 
+
+        $user = auth()->user();
+        activity('leave_log')
+            ->performedOn(new Leave())
+            ->event('bulk_delete')
+            ->causedBy(auth()->user())
+            ->log("{$user->name} Bulk Delete {$leave} Leave");
+
         if ($leave >= 1) {
             return response()->json([
-                'message' => "{$leave} Data selection updated to deleted!"
+                'message' => "{$leave} Data selection  deleted!"
             ], 200);
         } else {
             return response()->json([

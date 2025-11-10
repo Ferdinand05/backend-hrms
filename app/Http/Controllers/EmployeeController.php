@@ -207,6 +207,13 @@ class EmployeeController extends Controller
                 'status' => 'active'
             ]);
 
+        $user = auth()->user();
+        activity('employee_log')
+            ->performedOn(new Employee())
+            ->event('updated')
+            ->causedBy(auth()->user())
+            ->log("{$user->name} Set {$employee} Employee Active");
+
         if ($employee >= 1) {
             return response()->json([
                 'message' => "{$employee} Data selection updated to active!"
@@ -227,6 +234,14 @@ class EmployeeController extends Controller
                 'status' => 'inactive'
             ]);
 
+        $user = auth()->user();
+        activity('employee_log')
+            ->performedOn(new Employee())
+            ->event('updated')
+            ->causedBy(auth()->user())
+            ->log("{$user->name} Set {$employee} Employee Inactive");
+
+
         if ($employee >= 1) {
             return response()->json([
                 'message' => "{$employee} Data selection updated to Inactive!"
@@ -245,7 +260,13 @@ class EmployeeController extends Controller
 
         $employee = Employee::whereIn('id', $Ids)->delete();
 
+        $user = auth()->user();
+        activity('employee_log')
+            ->performedOn(new Employee())
+            ->event('bulk_deleted')
+            ->causedBy(auth()->user())
 
+            ->log("{$user->name} Bulk Delete {$employee} employee");
 
         if ($employee >= 1) {
             return response()->json([
