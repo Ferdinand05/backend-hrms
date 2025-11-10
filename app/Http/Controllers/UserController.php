@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -28,15 +29,16 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role_id' => 'required|exists:roles,id',
             'employee_id' => 'required|exists:employees,id|unique:users,employee_id',
         ]);
 
+        $employee = Employee::find($request->employee_id);
+
         $user = User::create([
-            'name' => $request->name,
+            'name' => $employee->full_name,
             'email' => $request->email,
             'password' => $request->password,
             'role_id' => $request->role_id,
@@ -70,20 +72,26 @@ class UserController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
             'password' => 'sometimes|nullable|string|min:8|confirmed',
             'role_id' => 'sometimes|required|exists:roles,id',
-            'employee_id' => 'sometimes|required|exists:employees,id|unique:users,employee_id' . $id,
+            'employee_id' => 'sometimes|required|exists:employees,id|unique:users,employee_id,' . $id,
         ]);
 
         $user = User::findOrFail($id);
+
+        if ($request->employee_id) {
+            $employee = Employee::find($request->employee_id);
+        } else {
+            $employee = Employee::find($user->employee_id);
+        }
+
         $user->update([
-            'name' => $request->name,
+            'name' => $employee->full_name,
             'email' => $request->email,
             'password' => $request->password ?? $user->password,
             'role_id' => $request->role_id,
-            'employee_id' => $request->employee_id,
+            'employee_id' => $request->employee_id ?? $user->employee_id,
         ]);
 
         return response()->json([
