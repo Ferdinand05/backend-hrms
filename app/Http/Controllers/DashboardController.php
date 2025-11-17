@@ -16,6 +16,15 @@ class DashboardController extends Controller
     {
 
 
+        // ringkasan absensi harian
+        $dateNow = Carbon::now('Asia/Jakarta')->format('Y-m-d'); //date
+        $employeeHasAttendToday = Attendance::whereDate('date', $dateNow)
+            ->whereNotNull('clock_in')
+            ->count();
+        $employeeLateToday = Attendance::whereDate('date', $dateNow)
+            ->where('status', 'late')
+            ->count();
+
         if ($request->month) {
             $currentDate = Carbon::parse($request->month);
         } else {
@@ -65,7 +74,9 @@ class DashboardController extends Controller
             'totalThisMonthAttendance' => Attendance::whereMonth('created_at', $currentDate)->count(),
             'totalAttendanceLateThisMonth' => Attendance::whereMonth('created_at', $currentDate)->where('status', 'late')->count(),
             'latestPendingLeaves' => Leave::with('employee')->where('status', 'pending')->latest()->get(),
-            'dataChart' => $dataChart
+            'dataChart' => $dataChart,
+            'employeeHasAttendToday' => $employeeHasAttendToday,
+            'employeeLateToday' => $employeeLateToday
         ];
 
 
