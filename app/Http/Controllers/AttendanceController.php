@@ -30,6 +30,14 @@ class AttendanceController extends Controller
             $query->whereDate('date', $start_date);
         }
 
+
+        if ($request->filter == 'today') {
+            $query->whereDate('date', today('Asia/Jakarta')->toDate());
+        } else if ($request->filter == 'this_month') {
+            $query->whereMonth('date', Carbon::now('Asia/Jakarta')->month);
+        }
+
+
         $attendances = $query->latest()->get();
         return response()->json([
             'attendances' => AttendanceResource::collection($attendances),

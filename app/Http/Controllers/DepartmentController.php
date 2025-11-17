@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\DepartmentResource;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class DepartmentController extends Controller
 {
@@ -13,9 +14,18 @@ class DepartmentController extends Controller
      */
     public function index()
     {
+
+        $departments = Cache::remember('departments_list', 600, function () {
+            return DepartmentResource::collection(
+                Department::with(['employees'])
+                    ->get()
+            );
+        });
+
+
         return response()->json(
             [
-                'departments' => DepartmentResource::collection(Department::all()),
+                'departments' => $departments,
                 'message' => 'Department list fetched successfully',
                 'status' => 200,
             ]

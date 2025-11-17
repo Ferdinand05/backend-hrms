@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\SalaryResource;
 use App\Models\Salary;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class SalaryController extends Controller
 {
@@ -13,8 +14,17 @@ class SalaryController extends Controller
      */
     public function index()
     {
+
+        $salaries = Cache::remember('salaries_list', 600, function () {
+            return SalaryResource::collection(
+                Salary::with(['employee'])
+                    ->latest()
+                    ->get()
+            );
+        });
+
         return response()->json([
-            'salaries' => SalaryResource::collection(Salary::with('employee')->latest()->get()),
+            'salaries' => $salaries,
             'message' => 'Salaries fetched successfully',
             'status' => '200'
         ]);

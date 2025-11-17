@@ -6,6 +6,7 @@ use App\Http\Resources\UserResource;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class UserController extends Controller
 {
@@ -14,10 +15,19 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('role', 'employee')->get();
+
+
+        $users = Cache::remember('users_list', 600, function () {
+            return UserResource::collection(
+                User::with(['employee', 'role'])
+                    ->get()
+            );
+        });
+
+
 
         return response()->json([
-            'users' => UserResource::collection($users),
+            'users' => $users,
             'message' => 'User list fetched successfully',
             'status' => 200,
         ]);

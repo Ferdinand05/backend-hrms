@@ -28,7 +28,7 @@ class ProfileUserController extends Controller
 
     public function getProfile()
     {
-        $user = $this->user
+        $user = User::where('id', $this->user->id)
             ->with(['employee', 'employee.department', 'role', 'employee.salary'])
             ->first();
 

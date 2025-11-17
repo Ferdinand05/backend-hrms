@@ -6,6 +6,7 @@ use App\Http\Resources\EmployeeResource;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class EmployeeController extends Controller
@@ -15,10 +16,18 @@ class EmployeeController extends Controller
      */
     public function index()
     {
+        $employees = Cache::remember('employees_list', 600, function () {
+            return EmployeeResource::collection(
+                Employee::with(['department', 'salary', 'user'])
+                    ->orderBy('full_name', 'asc')
+                    ->get()
+            );
+        });
+
         return response()->json([
-            'employees' => EmployeeResource::collection(Employee::with(['department', 'salary', 'user'])->orderBy('full_name', 'asc')->get()),
-            'message' => 'Employee list fetched successfully',
-            'status' => 200,
+            'employees' => $employees,
+            'message'   => 'Employee list fetched successfully',
+            'status'    => 200,
         ]);
     }
 

@@ -10,6 +10,7 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\Profile\ProfileUserController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\UserController;
+use App\Models\Office;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,41 +25,49 @@ Route::get('/user', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
 
     //# for user admin
-    Route::get('/dashboard', [DashboardController::class, 'index']);
-    Route::apiResource('/users', UserController::class);
-    Route::apiResource('/roles', \App\Http\Controllers\RoleController::class);
-    Route::apiResource('/departments', \App\Http\Controllers\DepartmentController::class);
-    // employees
-    Route::apiResource('/employees', \App\Http\Controllers\EmployeeController::class);
-    Route::get('/employees-with-salary-without-payroll', [EmployeeController::class, 'employeesWithSalaryWithoutPayroll']);
-    Route::get('/employees-without-salary', [EmployeeController::class, 'employeesDoesntHaveSalary']);
-    Route::get('/employees-without-user', [EmployeeController::class, 'employeesDoesntHaveUser']);
-    Route::post('/employees/set-active', [EmployeeController::class, 'selectionSetActive']);
-    Route::post('/employees/set-inactive', [EmployeeController::class, 'selectionSetInactive']);
-    Route::post('/employees/bulk-delete', [EmployeeController::class, 'bulkDelete']);
-    // attendance
-    Route::apiResource('/attendances', AttendanceController::class);
-    // leaves
-    Route::apiResource('/leaves', LeaveController::class);
-    Route::post('/leaves/bulk/approve', [LeaveController::class, 'bulkApprove']);
-    Route::post('/leaves/bulk/reject', [LeaveController::class, 'bulkReject']);
-    Route::post('/leaves/bulk/delete', [LeaveController::class, 'bulkDelete']);
-    // salaries
-    Route::apiResource('/salaries', SalaryController::class);
-    // payrolls
-    Route::apiResource('/payrolls', PayrollController::class);
-    Route::put('/payrolls/bulk/paid', [PayrollController::class, 'selectionSetPaid']);
-    Route::post('/payrolls/bulk/delete', [PayrollController::class, 'bulkDelete']);
-    Route::post('/payrolls/generate-all', [PayrollController::class, 'generateAllEmployeePayroll']);
-    // logs
-    Route::apiResource('/logs', LogController::class);
-    // offices
-    Route::apiResource('/offices', OfficeController::class);
+    Route::middleware('isAdmin')->group(function () {
+
+        Route::get('/dashboard', [DashboardController::class, 'index']);
+        Route::apiResource('/users', UserController::class);
+        Route::apiResource('/roles', \App\Http\Controllers\RoleController::class);
+        Route::apiResource('/departments', \App\Http\Controllers\DepartmentController::class);
+        // employees
+        Route::apiResource('/employees', \App\Http\Controllers\EmployeeController::class);
+        Route::get('/employees-with-salary-without-payroll', [EmployeeController::class, 'employeesWithSalaryWithoutPayroll']);
+        Route::get('/employees-without-salary', [EmployeeController::class, 'employeesDoesntHaveSalary']);
+        Route::get('/employees-without-user', [EmployeeController::class, 'employeesDoesntHaveUser']);
+        Route::post('/employees/set-active', [EmployeeController::class, 'selectionSetActive']);
+        Route::post('/employees/set-inactive', [EmployeeController::class, 'selectionSetInactive']);
+        Route::post('/employees/bulk-delete', [EmployeeController::class, 'bulkDelete']);
+        // attendance
+        Route::apiResource('/attendances', AttendanceController::class);
+        // leaves
+        Route::apiResource('/leaves', LeaveController::class);
+        Route::post('/leaves/bulk/approve', [LeaveController::class, 'bulkApprove']);
+        Route::post('/leaves/bulk/reject', [LeaveController::class, 'bulkReject']);
+        Route::post('/leaves/bulk/delete', [LeaveController::class, 'bulkDelete']);
+        // salaries
+        Route::apiResource('/salaries', SalaryController::class);
+        // payrolls
+        Route::apiResource('/payrolls', PayrollController::class);
+        Route::put('/payrolls/bulk/paid', [PayrollController::class, 'selectionSetPaid']);
+        Route::post('/payrolls/bulk/delete', [PayrollController::class, 'bulkDelete']);
+        Route::post('/payrolls/generate-all', [PayrollController::class, 'generateAllEmployeePayroll']);
+        // logs
+        Route::apiResource('/logs', LogController::class);
+
+        // update office
+        Route::put('/offices/{id}', [OfficeController::class, 'update']);
+    });
 
 
     // --------------------------------------------------------------------------------
 
     //SECTION for user employee
+
+    // get/show offices data
+    Route::get('/offices/{id}', [OfficeController::class, 'show']);
+
     // user store leaves
     Route::post('/leaves/user/create', [LeaveController::class, 'userStore']);
 
