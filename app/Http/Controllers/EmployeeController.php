@@ -16,6 +16,9 @@ class EmployeeController extends Controller
      */
     public function index()
     {
+
+
+
         $employees = Cache::remember('employees_list', 600, function () {
             return EmployeeResource::collection(
                 Employee::with(['department', 'salary', 'user'])

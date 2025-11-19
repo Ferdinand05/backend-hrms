@@ -14,20 +14,19 @@ class SalaryController extends Controller
      */
     public function index()
     {
-
+        // jika Redis mendukung tags, gunakan Cache::tags(['salaries']) agar mudah flush
         $salaries = Cache::remember('salaries_list', 600, function () {
+            // cache data yang sudah di-transform jadi array (bukan Resource object)
             return SalaryResource::collection(
-                Salary::with(['employee'])
-                    ->latest()
-                    ->get()
+                Salary::with('employee')->latest()->get()
             );
         });
 
         return response()->json([
             'salaries' => $salaries,
             'message' => 'Salaries fetched successfully',
-            'status' => '200'
-        ]);
+            'status' => 200
+        ], 200);
     }
 
     /**

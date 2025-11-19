@@ -28,12 +28,28 @@ class OfficeController extends Controller
      */
     public function show(string $id)
     {
-        $office = Office::first();
+        $cacheKey = "office:{$id}";
+        $ttl = 60 * 60; // 1 hour in seconds
 
-        $office->makeHidden(['updated_at', 'created_at']);
+        $officeData = \Illuminate\Support\Facades\Cache::remember($cacheKey, $ttl, function () use ($id) {
+            $office = Office::find($id);
+            if (!$office) {
+                return null;
+            }
+            return $office->makeHidden(['updated_at', 'created_at'])->toArray();
+        });
+
+        if (!$officeData) {
+            return response()->json([
+                'office' => null,
+                'message' => 'Office not found.',
+                'status' => 404
+            ], 404);
+        }
+
         return response()->json([
-            'office' => $office,
-            'message' => 'Office data fetched succesfully!',
+            'office' => $officeData,
+            'message' => 'Office data fetched successfully!',
             'status' => 200
         ], 200);
     }
